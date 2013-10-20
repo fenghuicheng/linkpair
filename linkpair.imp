@@ -1,0 +1,116 @@
+#include "include.h"
+#include "linkpair.h"
+
+template <typename T>
+void LinkPairAlgo<T>::AddLinkPair(const T &from, const T &to)
+{
+	assert(from != to);
+	m_linkSet.insert(from);
+	m_linkSet.insert(to);
+
+#ifdef DEBUG_SUPPORT
+	std::cout << "Add link pair (" << from << ", " << to << ")" << std::endl;
+#endif
+
+	for(size_t i = 0; i < m_linkRelations.size(); i++)
+	{
+		assert(m_linkRelations[i].size() > 1);
+		const T  &listFront = m_linkRelations[i].front();
+		const T  &listBack = m_linkRelations[i].back();
+		if (from == listBack)
+		{
+			m_linkRelations[i].push_back(to);
+			return;
+		}
+		if (to == listFront)
+		{
+			m_linkRelations[i].push_front(from);
+			return;
+		}
+	}
+	std::list<T> newList;
+	newList.push_back(from);
+	newList.push_back(to);
+	m_linkRelations.push_back(newList);
+}
+
+template <typename T>
+void LinkPairAlgo<T>::PrepareLinkInfo()
+{
+	assert(m_headElements.empty() && m_middleElements.empty());
+	const size_t linkSize = m_linkRelations.size();
+	std::vector<T> tailElements;
+	tailElements.reserve(linkSize);
+	m_headElements.reserve(linkSize);
+	m_middleElements.reserve(linkSize);
+
+	for (size_t i = 0; i < linkSize; i++)
+	{
+		assert(m_linkRelations[i].size() > 1);
+		m_headElements.push_back(m_linkRelations[i].front());
+		tailElements.push_back(m_linkRelations[i].back());
+	}
+
+	std::sort(m_headElements.begin(), m_headElements.end());
+	std::sort(tailElements.begin(), tailElements.end());
+
+	std::set_intersection(m_headElements.begin(), m_headElements.end(),
+			      tailElements.begin(), tailElements.end(),
+			      back_inserter(m_middleElements));
+
+	std::vector<T> tempSet;
+	std::set_difference(m_headElements.begin(), m_headElements.end(),
+			    m_middleElements.begin(), m_middleElements.end(),
+			    back_inserter(tempSet));
+	tempSet.swap(m_headElements);
+	tempSet.clear();
+
+	m_middleElements.clear();
+	std::set_difference(m_linkSet.begin(), m_linkSet.end(),
+			    m_headElements.begin(), m_headElements.end(),
+			    back_inserter(m_middleElements));
+
+	m_linkSet.clear();
+	std::vector<T>(m_headElements).swap(m_headElements);
+	std::vector<T>(m_middleElements).swap(m_middleElements);
+}
+
+template <typename T>
+void LinkPairAlgo<T>::TrimLinksVector()
+{
+	this->PrepareLinkInfo();
+	int headCount = m_linkRelations.size() - m_headElements.size();
+	assert(headCount > 0);
+	T temp = T();
+	for (size_t i = 0; i < m_linkRelations.size(); i++)
+	{
+		if (std::binary_search(m_headElements.begin(), m_headElements.end(), m_linkRelations[i].front()))
+			continue;
+
+		temp = m_linkRelations[i].front();
+		for (size_t j = 0; j < m_linkRelations.size(); j++)
+		{
+			if (temp == m_linkRelations[j].back())
+			{
+				m_linkRelations[j].pop_back();
+				m_linkRelations[j].splice(m_linkRelations[j].end(), m_linkRelations[i]);
+				m_linkRelations.erase(m_linkRelations.begin() + i);
+				i--;
+				if (--headCount == 0)
+					return;
+
+				break;
+			}
+		}
+	}
+}
+template <typename T>
+void  LinkPairAlgo<T>::Run(LinkPairVisitor<T> *pVisitor)
+{
+	TrimLinksVector();
+	if (NULL != pVisitor)
+	{
+		pVisitor->VisitLinkNodes(this);
+		delete pVisitor;
+	}
+}

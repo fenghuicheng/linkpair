@@ -1,0 +1,28 @@
+#include "include.h"
+#include "visitor.h"
+	
+template <typename T>
+void PrintVisitor<T>::VisitLinkNodes(const LinkPairAlgo<T> *pAlgResult)
+{
+	assert(NULL != pAlgResult);
+	const std::vector<std::list<T> > &result = GetLinksVector(pAlgResult);
+	std::cout << "There exist(s) " << result.size() << " chain(s) :" << std::endl;
+	for (size_t i = 0; i < result.size(); i++)
+	{
+		const std::list<T> &subresult = result[i];
+		std::cout << "chain " << i << " : ";
+		for (typename std::list<T>::const_iterator it = subresult.begin(); it !=  subresult.end(); ++it)
+		{
+			std::cout << *it << "-->";
+		}
+		std::cout << "|" << std::endl;
+	}
+	std::cout << "Printing finished!" << std::endl; 
+}
+
+template <typename T>
+const std::vector<std::list<T> >& LinkPairVisitor<T>::GetLinksVector(const LinkPairAlgo<T> *pAlgResult)
+{
+	assert(NULL != pAlgResult);
+	return pAlgResult->m_linkRelations; 
+}
