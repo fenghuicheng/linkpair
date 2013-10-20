@@ -20,4 +20,5 @@ test.o: test.cpp include.gch
 clean:
 	@rm -f include.gch
 	@rm -f *.o
+	@rm -f *~
 	@rm -f test

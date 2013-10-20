@@ -1,10 +1,4 @@
-//#include "include.h"
-#include <vector>
-#include <list>
-#include <iostream>
-#include <set>
-#include <algorithm>
-#include <cassert>
+#include "include.h"
 #include "visitor.h"
 #include "linkpair.h"
 
